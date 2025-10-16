@@ -524,20 +524,6 @@ const TowerDefense: React.FC<TowerDefenseProps> = ({ onBack }) => {
     }
   }, [gameState, spawnWave, waveInProgress])
 
-  const resetGame = useCallback(() => {
-    const settings = difficultySettings[difficulty]
-    setWave(1)
-    setHealth(settings.startingHealth)
-    setMoney(settings.startingMoney)
-    setScore(0)
-    setEnemies([])
-    setTowers([])
-    setProjectiles([])
-    setWaveInProgress(false)
-    setSelectedTowerType(null)
-    setGameState('starting')
-  }, [difficulty])
-
   const changeDifficulty = useCallback((newDifficulty: Difficulty) => {
     setDifficulty(newDifficulty)
     const settings = difficultySettings[newDifficulty]

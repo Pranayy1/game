@@ -55,7 +55,6 @@ interface Particle {
 }
 
 type GameState = 'starting' | 'playing' | 'paused' | 'gameOver' | 'won'
-type Difficulty = 'cadet' | 'pilot' | 'ace' | 'legend'
 
 const SpaceInvaders: React.FC<SpaceInvadersProps> = ({ onBack }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
