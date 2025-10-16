@@ -1,0 +1,130 @@
+/* Common Game Container Styles */
+.game-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 3rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.back-btn {
+  background: rgba(255, 255, 255, 0.9);
+  color: #1e293b;
+  border: 2px solid #e2e8f0;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+  background: white;
+  border-color: #0ea5e9;
+  transform: translateY(-2px);
+}
+
+.game-header h1 {
+  flex: 1;
+  text-align: center;
+  margin: 0;
+  color: #1e293b;
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.coming-soon {
+  text-align: center;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 24px;
+  padding: 4rem 2rem;
+  box-shadow: 0 8px 32px rgba(14, 165, 233, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.coming-soon h2 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: #1e293b;
+  font-weight: 700;
+}
+
+.coming-soon p {
+  font-size: 1.2rem;
+  color: #64748b;
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.features-preview {
+  margin-top: 2rem;
+  padding: 2rem;
+  background: rgba(14, 165, 233, 0.05);
+  border-radius: 16px;
+  border: 2px solid rgba(14, 165, 233, 0.1);
+}
+
+.features-preview ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.features-preview li {
+  color: #1e293b;
+  font-weight: 500;
+  font-size: 1rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 12px;
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.features-preview li:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.2);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .game-container {
+    padding: 1rem;
+  }
+  
+  .game-header {
+    flex-direction: column;
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  
+  .game-header h1 {
+    font-size: 2rem;
+  }
+  
+  .coming-soon {
+    padding: 2rem 1rem;
+  }
+  
+  .coming-soon h2 {
+    font-size: 2rem;
+  }
+  
+  .features-preview ul {
+    grid-template-columns: 1fr;
+  }
+}

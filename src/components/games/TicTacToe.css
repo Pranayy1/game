@@ -1,0 +1,341 @@
+/* Tic Tac Toe Styles */
+.tic-tac-toe {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 2rem;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.back-btn {
+  background: rgba(255, 255, 255, 0.9);
+  color: #1e293b;
+  border: 2px solid #e2e8f0;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+  background: white;
+  border-color: #0ea5e9;
+  transform: translateY(-2px);
+}
+
+.game-header h1 {
+  flex: 1;
+  text-align: center;
+  margin: 0;
+  color: #1e293b;
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.game-controls {
+  display: flex;
+  gap: 1rem;
+}
+
+.mode-select, .difficulty-select {
+  padding: 0.5rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  color: #1e293b;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.mode-select:hover, .difficulty-select:hover {
+  border-color: #0ea5e9;
+}
+
+.game-info {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px rgba(14, 165, 233, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.current-player {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 1rem;
+}
+
+.player-indicator {
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  background: rgba(226, 232, 240, 0.5);
+  color: #64748b;
+  border: 2px solid transparent;
+}
+
+.player-indicator.active {
+  background: linear-gradient(135deg, #0ea5e9, #3b82f6);
+  color: white;
+  transform: scale(1.05);
+  border-color: white;
+  box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
+}
+
+.vs {
+  font-weight: 700;
+  color: #64748b;
+  font-size: 1.2rem;
+}
+
+.ties-count {
+  text-align: center;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.game-container {
+  position: relative;
+  margin-bottom: 2rem;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(14, 165, 233, 0.15);
+  backdrop-filter: blur(10px);
+}
+
+.cell {
+  aspect-ratio: 1;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border: 3px solid #e2e8f0;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
+  overflow: hidden;
+  min-height: 80px;
+}
+
+.cell::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(59, 130, 246, 0.1));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 13px;
+}
+
+.cell:hover::before {
+  opacity: 1;
+}
+
+.cell:hover {
+  transform: scale(1.05);
+  border-color: #0ea5e9;
+  box-shadow: 0 8px 25px rgba(14, 165, 233, 0.2);
+}
+
+.cell.filled {
+  cursor: default;
+  background: linear-gradient(135deg, #ffffff, #f8fafc);
+}
+
+.cell.filled:hover {
+  transform: none;
+}
+
+.cell.recent-move {
+  animation: pulseGlow 1s ease-out;
+}
+
+.mark {
+  font-size: 2.5rem;
+  font-weight: 900;
+  animation: markAppear 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.mark-x {
+  color: #ef4444;
+  text-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+}
+
+.mark-o {
+  color: #3b82f6;
+  text-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.game-result {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  animation: resultAppear 0.5s ease-out;
+}
+
+.result-content {
+  text-align: center;
+  padding: 2rem;
+}
+
+.result-icon {
+  font-size: 4rem;
+  display: block;
+  margin-bottom: 1rem;
+  animation: bounce 1s ease-out;
+}
+
+.result-content h2 {
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+  font-size: 2rem;
+}
+
+.result-content p {
+  color: #64748b;
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+}
+
+.result-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.game-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Animations */
+@keyframes markAppear {
+  0% {
+    transform: scale(0) rotate(180deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(90deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(14, 165, 233, 0);
+  }
+}
+
+@keyframes resultAppear {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes bounce {
+  0%, 20%, 53%, 80%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  40%, 43% {
+    transform: translate3d(0, -20px, 0);
+  }
+  70% {
+    transform: translate3d(0, -10px, 0);
+  }
+  90% {
+    transform: translate3d(0, -4px, 0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .tic-tac-toe {
+    padding: 1rem;
+  }
+  
+  .game-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .game-header h1 {
+    font-size: 2rem;
+  }
+  
+  .game-controls {
+    justify-content: center;
+  }
+  
+  .current-player {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .board {
+    padding: 1rem;
+  }
+  
+  .cell {
+    min-height: 60px;
+  }
+  
+  .mark {
+    font-size: 2rem;
+  }
+  
+  .game-actions {
+    flex-direction: column;
+  }
+}
