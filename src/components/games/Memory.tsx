@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import './Memory.css'
 
 interface MemoryProps {
@@ -17,18 +17,28 @@ const Memory: React.FC<MemoryProps> = ({ onBack }) => {
   const [flippedCards, setFlippedCards] = useState<number[]>([])
   const [moves, setMoves] = useState(0)
   const [matches, setMatches] = useState(0)
+  const matchesRef = useRef(0)
+  matchesRef.current = matches
   const [gameWon, setGameWon] = useState(false)
   const [difficulty, setDifficulty] = useState<4 | 6 | 8>(4)
 
-  const symbols = ['🎮', '🎯', '🎪', '🎨', '🎭', '🎪', '🎲', '🎸', '🎺', '🎻', '🥁', '🎤', '🎧', '📱', '💻', '⚽']
+  const symbols = ['🎮', '🎯', '🎪', '🎨', '🎭', '🎲', '🎸', '🎺', '🎻', '🥁', '🎤', '🎧', '📱', '💻', '⚽', '🏀', '🎾', '🏈', '⚾', '🎱', '🏐', '🏉', '🥏', '🎳', '🏓', '🏸', '🥊', '🥋', '🎣', '🎽', '🎿', '🏂']
 
-  const initializeGame = () => {
+  const fisherYatesShuffle = (array: string[]) => {
+    const shuffled = [...array]
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+    }
+    return shuffled
+  }
+
+  const initializeGame = useCallback(() => {
     const numPairs = (difficulty * difficulty) / 2
     const gameSymbols = symbols.slice(0, numPairs)
     const cardPairs = [...gameSymbols, ...gameSymbols]
     
-    const shuffled = cardPairs
-      .sort(() => Math.random() - 0.5)
+    const shuffled = fisherYatesShuffle(cardPairs)
       .map((symbol, index) => ({
         id: index,
         value: symbol,
@@ -41,7 +51,12 @@ const Memory: React.FC<MemoryProps> = ({ onBack }) => {
     setMoves(0)
     setMatches(0)
     setGameWon(false)
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [difficulty])
+
+  useEffect(() => {
+    initializeGame()
+  }, [initializeGame])
 
   const handleCardClick = (cardId: number) => {
     if (flippedCards.length >= 2 || cards[cardId].isFlipped || cards[cardId].isMatched) return
@@ -66,7 +81,7 @@ const Memory: React.FC<MemoryProps> = ({ onBack }) => {
           setCards(updatedCards)
           setMatches(prev => prev + 1)
           
-          if (matches + 1 === (difficulty * difficulty) / 2) {
+          if (matchesRef.current + 1 === (difficulty * difficulty) / 2) {
             setGameWon(true)
           }
         } else {
@@ -80,10 +95,6 @@ const Memory: React.FC<MemoryProps> = ({ onBack }) => {
       }, 1000)
     }
   }
-
-  useEffect(() => {
-    initializeGame()
-  }, [difficulty])
 
   return (
     <div className="memory-game">

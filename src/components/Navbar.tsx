@@ -14,12 +14,8 @@ const Navbar: React.FC<NavbarProps> = ({ currentGame, onHomeClick }) => {
       snake: 'Snake Game',
       memory: 'Memory Game',
       sudoku: 'Sudoku',
-      breakout: 'Breakout',
       pong: 'Pong',
-      bubbleshooter: 'Bubble Shooter',
-      flappybird: 'Flappy Bird',
       towerdefense: 'Tower Defense',
-      puzzleslider: 'Puzzle Slider',
       spaceinvaders: 'Space Invaders'
     }
     return titles[game] || 'Game Hub'
@@ -38,6 +34,10 @@ const Navbar: React.FC<NavbarProps> = ({ currentGame, onHomeClick }) => {
         </div>
         
         <div className="navbar-actions">
+          <a href="https://pranayy1.github.io/homepage(Studyplay)/" className="studyplay-link">
+            <span>📚</span>
+            StudyPlay
+          </a>
           {currentGame !== 'hub' && (
             <button className="btn btn-secondary" onClick={onHomeClick}>
               <span>🏠</span>

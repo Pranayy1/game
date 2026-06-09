@@ -18,8 +18,9 @@ const Footer: React.FC = () => {
               <li>Snake</li>
               <li>Memory Game</li>
               <li>Sudoku</li>
-              <li>Breakout</li>
               <li>Pong</li>
+              <li>Tower Defense</li>
+              <li>Space Invaders</li>
             </ul>
           </div>
           
@@ -44,7 +45,7 @@ const Footer: React.FC = () => {
         </div>
         
         <div className="footer-bottom">
-          <p>&copy; 2025 GameHub. Built with React + Vite. All rights reserved.</p>
+          <p>&copy; 2026 GameHub. Built with React + Vite. All rights reserved.</p>
         </div>
       </div>
     </footer>

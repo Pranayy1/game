@@ -8,6 +8,12 @@ interface SudokuProps {
 type SudokuGrid = (number | null)[][]
 type Difficulty = 'easy' | 'medium' | 'hard'
 
+const difficultySettings = {
+  easy: 40,    // 40 clues (easier)
+  medium: 30,  // 30 clues 
+  hard: 20     // 20 clues (harder)
+}
+
 const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
   const [grid, setGrid] = useState<SudokuGrid>(Array(9).fill(null).map(() => Array(9).fill(null)))
   const [initialGrid, setInitialGrid] = useState<SudokuGrid>(Array(9).fill(null).map(() => Array(9).fill(null)))
@@ -18,12 +24,6 @@ const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
   const [hints, setHints] = useState(3)
   const [timer, setTimer] = useState(0)
   const [isTimerRunning, setIsTimerRunning] = useState(false)
-
-  const difficultySettings = {
-    easy: 40,    // 40 clues (easier)
-    medium: 30,  // 30 clues 
-    hard: 20     // 20 clues (harder)
-  }
 
   // Generate a valid complete Sudoku grid
   const generateCompleteGrid = (): SudokuGrid => {
@@ -52,11 +52,20 @@ const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
       return true
     }
     
+    const fisherYatesShuffle = (array: number[]) => {
+      const shuffled = [...array]
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+      }
+      return shuffled
+    }
+
     const fillGrid = (grid: SudokuGrid): boolean => {
       for (let row = 0; row < 9; row++) {
         for (let col = 0; col < 9; col++) {
           if (grid[row][col] === null) {
-            const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9].sort(() => Math.random() - 0.5)
+            const numbers = fisherYatesShuffle([1, 2, 3, 4, 5, 6, 7, 8, 9])
             for (const num of numbers) {
               if (isValidMove(grid, row, col, num)) {
                 grid[row][col] = num

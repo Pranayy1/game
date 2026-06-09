@@ -12,21 +12,27 @@ interface GameStats {
   gamesPlayed: number
   winStreak: number
   favoriteGame: string
+  gameCounts: { [key: string]: number }
 }
 
 const GameHub: React.FC<GameHubProps> = ({ onGameSelect }) => {
   const [stats, setStats] = useState<GameStats>({
-    totalGames: 5,
+    totalGames: 7,
     gamesPlayed: 0,
     winStreak: 0,
-    favoriteGame: 'None'
+    favoriteGame: 'None',
+    gameCounts: {}
   })
 
   useEffect(() => {
-    // Load stats from localStorage
     const savedStats = localStorage.getItem('gameHubStats')
     if (savedStats) {
-      setStats(JSON.parse(savedStats))
+      try {
+        const parsed = JSON.parse(savedStats)
+        setStats(prev => ({ ...prev, ...parsed, gameCounts: parsed.gameCounts || {} }))
+      } catch {
+        localStorage.removeItem('gameHubStats')
+      }
     }
   }, [])
 
@@ -90,10 +96,24 @@ const GameHub: React.FC<GameHubProps> = ({ onGameSelect }) => {
   ]
 
   const handleGameSelect = (gameId: string) => {
-    // Update stats
+    const newGameCounts = { ...stats.gameCounts }
+    newGameCounts[gameId] = (newGameCounts[gameId] || 0) + 1
+
+    let favoriteGame = 'None'
+    let maxCount = 0
+    for (const [game, count] of Object.entries(newGameCounts)) {
+      if (count > maxCount) {
+        maxCount = count
+        favoriteGame = game
+      }
+    }
+
+    const gameTitle = games.find(g => g.id === favoriteGame)?.title || favoriteGame
     const newStats = {
       ...stats,
-      gamesPlayed: stats.gamesPlayed + 1
+      gamesPlayed: stats.gamesPlayed + 1,
+      gameCounts: newGameCounts,
+      favoriteGame: maxCount > 0 ? gameTitle : 'None'
     }
     setStats(newStats)
     localStorage.setItem('gameHubStats', JSON.stringify(newStats))

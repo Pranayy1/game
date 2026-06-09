@@ -168,6 +168,7 @@ const TicTacToe: React.FC<TicTacToeProps> = ({ onBack }) => {
       
       return () => clearTimeout(timer)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPlayer, gameMode, board, winner, isAnimating])
 
   const resetGame = () => {

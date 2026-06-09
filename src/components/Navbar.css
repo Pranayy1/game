@@ -65,6 +65,26 @@
   gap: 1rem;
 }
 
+.studyplay-link {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+  border-radius: 12px;
+  color: white;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.studyplay-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4);
+}
+
 .user-profile {
   display: flex;
   align-items: center;
@@ -98,6 +118,10 @@
   }
   
   .brand-text {
+    display: none;
+  }
+  
+  .studyplay-link span {
     display: none;
   }
   

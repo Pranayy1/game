@@ -50,13 +50,72 @@ interface Projectile {
 type GameState = 'starting' | 'playing' | 'paused' | 'gameOver' | 'building' | 'won'
 type Difficulty = 'easy' | 'medium' | 'hard' | 'nightmare'
 
+const path: Position[] = [
+  { x: 0, y: 240 }, { x: 120, y: 240 }, { x: 120, y: 80 }, { x: 280, y: 80 },
+  { x: 280, y: 200 }, { x: 440, y: 200 }, { x: 440, y: 120 }, { x: 600, y: 120 },
+  { x: 600, y: 280 }, { x: 720, y: 280 }, { x: 720, y: 360 }, { x: 800, y: 360 }
+]
+
+const towerTypes = {
+  basic: { damage: 20, range: 80, fireRate: 1000, cost: 50, color: '#3b82f6' },
+  rapid: { damage: 10, range: 60, fireRate: 300, cost: 75, color: '#22c55e' },
+  heavy: { damage: 50, range: 100, fireRate: 2000, cost: 100, color: '#ef4444' },
+  freeze: { damage: 5, range: 70, fireRate: 800, cost: 80, color: '#06b6d4' }
+}
+
+const difficultySettings = {
+  easy: { 
+    healthMultiplier: 0.7, 
+    speedMultiplier: 0.8, 
+    enemyCount: 0.8, 
+    rewardMultiplier: 1.2, 
+    startingMoney: 150, 
+    startingHealth: 30 
+  },
+  medium: { 
+    healthMultiplier: 1, 
+    speedMultiplier: 1, 
+    enemyCount: 1, 
+    rewardMultiplier: 1, 
+    startingMoney: 100, 
+    startingHealth: 20 
+  },
+  hard: { 
+    healthMultiplier: 1.5, 
+    speedMultiplier: 1.3, 
+    enemyCount: 1.3, 
+    rewardMultiplier: 0.8, 
+    startingMoney: 75, 
+    startingHealth: 15 
+  },
+  nightmare: { 
+    healthMultiplier: 2.5, 
+    speedMultiplier: 1.8, 
+    enemyCount: 1.8, 
+    rewardMultiplier: 0.6, 
+    startingMoney: 50, 
+    startingHealth: 10 
+  }
+}
+
+const enemyTypes = {
+  normal: { health: 50, speed: 1, reward: 10, color: '#fbbf24' },
+  fast: { health: 30, speed: 2, reward: 15, color: '#10b981' },
+  strong: { health: 100, speed: 0.7, reward: 25, color: '#f59e0b' },
+  boss: { health: 200, speed: 0.5, reward: 50, color: '#dc2626' }
+}
+
 const TowerDefense: React.FC<TowerDefenseProps> = ({ onBack }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationRef = useRef<number | undefined>(undefined)
+  const spawnTimeoutsRef = useRef<number[]>([])
+  const nextIdRef = useRef(1)
   
   const [gameState, setGameState] = useState<GameState>('starting')
   const [difficulty, setDifficulty] = useState<Difficulty>('medium')
   const [wave, setWave] = useState(1)
+  const waveRef = useRef(1)
+  waveRef.current = wave
   const [health, setHealth] = useState(20)
   const [money, setMoney] = useState(100)
   const [score, setScore] = useState(0)
@@ -69,62 +128,6 @@ const TowerDefense: React.FC<TowerDefenseProps> = ({ onBack }) => {
   const CANVAS_WIDTH = 800
   const CANVAS_HEIGHT = 600
   const GRID_SIZE = 40
-  
-  // Define the path for enemies to follow
-  const path: Position[] = [
-    { x: 0, y: 240 }, { x: 120, y: 240 }, { x: 120, y: 80 }, { x: 280, y: 80 },
-    { x: 280, y: 200 }, { x: 440, y: 200 }, { x: 440, y: 120 }, { x: 600, y: 120 },
-    { x: 600, y: 280 }, { x: 720, y: 280 }, { x: 720, y: 360 }, { x: 800, y: 360 }
-  ]
-
-  const towerTypes = {
-    basic: { damage: 20, range: 80, fireRate: 1000, cost: 50, color: '#3b82f6' },
-    rapid: { damage: 10, range: 60, fireRate: 300, cost: 75, color: '#22c55e' },
-    heavy: { damage: 50, range: 100, fireRate: 2000, cost: 100, color: '#ef4444' },
-    freeze: { damage: 5, range: 70, fireRate: 800, cost: 80, color: '#06b6d4' }
-  }
-
-  const difficultySettings = {
-    easy: { 
-      healthMultiplier: 0.7, 
-      speedMultiplier: 0.8, 
-      enemyCount: 0.8, 
-      rewardMultiplier: 1.2, 
-      startingMoney: 150, 
-      startingHealth: 30 
-    },
-    medium: { 
-      healthMultiplier: 1, 
-      speedMultiplier: 1, 
-      enemyCount: 1, 
-      rewardMultiplier: 1, 
-      startingMoney: 100, 
-      startingHealth: 20 
-    },
-    hard: { 
-      healthMultiplier: 1.5, 
-      speedMultiplier: 1.3, 
-      enemyCount: 1.3, 
-      rewardMultiplier: 0.8, 
-      startingMoney: 75, 
-      startingHealth: 15 
-    },
-    nightmare: { 
-      healthMultiplier: 2.5, 
-      speedMultiplier: 1.8, 
-      enemyCount: 1.8, 
-      rewardMultiplier: 0.6, 
-      startingMoney: 50, 
-      startingHealth: 10 
-    }
-  }
-
-  const enemyTypes = {
-    normal: { health: 50, speed: 1, reward: 10, color: '#fbbf24' },
-    fast: { health: 30, speed: 2, reward: 15, color: '#10b981' },
-    strong: { health: 100, speed: 0.7, reward: 25, color: '#f59e0b' },
-    boss: { health: 200, speed: 0.5, reward: 50, color: '#dc2626' }
-  }
 
   const spawnWave = useCallback(() => {
     if (waveInProgress) return
@@ -137,7 +140,6 @@ const TowerDefense: React.FC<TowerDefenseProps> = ({ onBack }) => {
     for (let i = 0; i < enemyCount; i++) {
       let type: Enemy['type'] = 'normal'
       
-      // More aggressive enemy types in higher difficulties
       const fastChance = difficulty === 'easy' ? 0.15 : difficulty === 'medium' ? 0.2 : difficulty === 'hard' ? 0.3 : 0.4
       const strongChance = difficulty === 'easy' ? 0.1 : difficulty === 'medium' ? 0.15 : difficulty === 'hard' ? 0.25 : 0.35
       const bossChance = difficulty === 'easy' ? 0.2 : difficulty === 'medium' ? 0.3 : difficulty === 'hard' ? 0.4 : 0.5
@@ -152,9 +154,10 @@ const TowerDefense: React.FC<TowerDefenseProps> = ({ onBack }) => {
       const finalSpeed = enemyTemplate.speed * settings.speedMultiplier
       const finalReward = Math.floor(enemyTemplate.reward * settings.rewardMultiplier)
       
-      setTimeout(() => {
+      const timeoutId = window.setTimeout(() => {
+        const enemyId = nextIdRef.current++
         setEnemies(prev => [...prev, {
-          id: Date.now() + i,
+          id: enemyId,
           x: path[0].x,
           y: path[0].y,
           health: finalHealth,
@@ -165,38 +168,11 @@ const TowerDefense: React.FC<TowerDefenseProps> = ({ onBack }) => {
           type
         }])
       }, i * (difficulty === 'nightmare' ? 300 : 500))
+      spawnTimeoutsRef.current.push(timeoutId)
     }
   }, [wave, waveInProgress, difficulty])
 
-  const placeTower = useCallback((x: number, y: number) => {
-    if (!selectedTowerType || !canPlaceTower(x, y)) return false
-    
-    const towerTemplate = towerTypes[selectedTowerType]
-    if (money < towerTemplate.cost) return false
-    
-    const gridX = Math.floor(x / GRID_SIZE) * GRID_SIZE + GRID_SIZE / 2
-    const gridY = Math.floor(y / GRID_SIZE) * GRID_SIZE + GRID_SIZE / 2
-    
-    const newTower: Tower = {
-      id: Date.now(),
-      x: gridX,
-      y: gridY,
-      type: selectedTowerType,
-      damage: towerTemplate.damage,
-      range: towerTemplate.range,
-      fireRate: towerTemplate.fireRate,
-      lastFire: 0,
-      cost: towerTemplate.cost,
-      level: 1
-    }
-    
-    setTowers(prev => [...prev, newTower])
-    setMoney(prev => prev - towerTemplate.cost)
-    setSelectedTowerType(null)
-    return true
-  }, [selectedTowerType, money])
-
-  const canPlaceTower = (x: number, y: number) => {
+  const canPlaceTower = useCallback((x: number, y: number) => {
     const gridX = Math.floor(x / GRID_SIZE) * GRID_SIZE
     const gridY = Math.floor(y / GRID_SIZE) * GRID_SIZE
     
@@ -225,7 +201,35 @@ const TowerDefense: React.FC<TowerDefenseProps> = ({ onBack }) => {
       Math.abs(tower.x - (gridX + GRID_SIZE / 2)) < GRID_SIZE / 2 && 
       Math.abs(tower.y - (gridY + GRID_SIZE / 2)) < GRID_SIZE / 2
     )
-  }
+  }, [towers])
+
+  const placeTower = useCallback((x: number, y: number) => {
+    if (!selectedTowerType || !canPlaceTower(x, y)) return false
+    
+    const towerTemplate = towerTypes[selectedTowerType]
+    if (money < towerTemplate.cost) return false
+    
+    const gridX = Math.floor(x / GRID_SIZE) * GRID_SIZE + GRID_SIZE / 2
+    const gridY = Math.floor(y / GRID_SIZE) * GRID_SIZE + GRID_SIZE / 2
+    
+    const newTower: Tower = {
+      id: nextIdRef.current++,
+      x: gridX,
+      y: gridY,
+      type: selectedTowerType,
+      damage: towerTemplate.damage,
+      range: towerTemplate.range,
+      fireRate: towerTemplate.fireRate,
+      lastFire: 0,
+      cost: towerTemplate.cost,
+      level: 1
+    }
+    
+    setTowers(prev => [...prev, newTower])
+    setMoney(prev => prev - towerTemplate.cost)
+    setSelectedTowerType(null)
+    return true
+  }, [selectedTowerType, money, canPlaceTower])
 
   const handleCanvasClick = useCallback((event: React.MouseEvent) => {
     if (gameState !== 'playing' && gameState !== 'building') return
@@ -270,48 +274,58 @@ const TowerDefense: React.FC<TowerDefenseProps> = ({ onBack }) => {
       if (updated.length === 0 && waveInProgress) {
         setWaveInProgress(false)
         setWave(w => w + 1)
-        setMoney(m => m + 50 + wave * 10) // Wave completion bonus
+        setMoney(m => m + 50 + waveRef.current * 10) // Wave completion bonus
       }
       
       return updated
     })
-  }, [wave, waveInProgress])
+  }, [waveInProgress])
 
   const updateTowers = useCallback(() => {
     const currentTime = Date.now()
-    
-    towers.forEach(tower => {
-      if (currentTime - tower.lastFire < tower.fireRate) return
-      
-      // Find nearest enemy in range
-      let nearestEnemy: Enemy | null = null
-      let nearestDistance = Infinity
-      
-      enemies.forEach(enemy => {
-        const distance = Math.sqrt((enemy.x - tower.x) ** 2 + (enemy.y - tower.y) ** 2)
-        if (distance <= tower.range && distance < nearestDistance) {
-          nearestEnemy = enemy
-          nearestDistance = distance
+    const newProjectiles: Projectile[] = []
+    const currentEnemies = enemies
+
+    setTowers(prevTowers => {
+      const updatedTowers = prevTowers.map(tower => {
+        if (currentTime - tower.lastFire < tower.fireRate) return tower
+
+        let nearestEnemy: Enemy | undefined = undefined
+        let nearestDistance = Infinity
+
+        for (const enemy of currentEnemies) {
+          const distance = Math.sqrt((enemy.x - tower.x) ** 2 + (enemy.y - tower.y) ** 2)
+          if (distance <= tower.range && distance < nearestDistance) {
+            nearestEnemy = enemy
+            nearestDistance = distance
+          }
         }
+
+        if (nearestEnemy) {
+          newProjectiles.push({
+            id: nextIdRef.current++,
+            x: tower.x,
+            y: tower.y,
+            targetX: nearestEnemy.x,
+            targetY: nearestEnemy.y,
+            damage: tower.damage,
+            speed: 300,
+            type: tower.type
+          })
+
+          return { ...tower, lastFire: currentTime }
+        }
+
+        return tower
       })
-      
-      if (nearestEnemy) {
-        // Create projectile
-        setProjectiles(prev => [...prev, {
-          id: Date.now() + Math.random(),
-          x: tower.x,
-          y: tower.y,
-          targetX: nearestEnemy!.x,
-          targetY: nearestEnemy!.y,
-          damage: tower.damage,
-          speed: 300,
-          type: tower.type
-        }])
-        
-        tower.lastFire = currentTime
-      }
+
+      return updatedTowers
     })
-  }, [towers, enemies])
+
+    if (newProjectiles.length > 0) {
+      setProjectiles(prev => [...prev, ...newProjectiles])
+    }
+  }, [enemies])
 
   const updateProjectiles = useCallback(() => {
     setProjectiles(prev => {
@@ -496,11 +510,40 @@ const TowerDefense: React.FC<TowerDefenseProps> = ({ onBack }) => {
     animationRef.current = requestAnimationFrame(gameLoop)
   }, [gameState, updateEnemies, updateTowers, updateProjectiles, draw])
 
+  const changeDifficulty = useCallback((newDifficulty: Difficulty) => {
+    setDifficulty(newDifficulty)
+    const settings = difficultySettings[newDifficulty]
+    setHealth(settings.startingHealth)
+    setMoney(settings.startingMoney)
+    setWave(1)
+    setScore(0)
+    setTowers([])
+    setEnemies([])
+    setProjectiles([])
+    setWaveInProgress(false)
+    setGameState('starting')
+  }, [])
+
+  const resetGame = useCallback(() => {
+    const settings = difficultySettings[difficulty]
+    setHealth(settings.startingHealth)
+    setMoney(settings.startingMoney)
+    setWave(1)
+    setScore(0)
+    setTowers([])
+    setEnemies([])
+    setProjectiles([])
+    setWaveInProgress(false)
+    setGameState('playing')
+  }, [difficulty])
+
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.code === 'Space') {
       event.preventDefault()
-      if (gameState === 'starting' || gameState === 'gameOver') {
+      if (gameState === 'starting') {
         setGameState('playing')
+      } else if (gameState === 'gameOver') {
+        resetGame()
       } else if (gameState === 'playing') {
         setGameState('paused')
       } else if (gameState === 'paused') {
@@ -522,14 +565,7 @@ const TowerDefense: React.FC<TowerDefenseProps> = ({ onBack }) => {
         case 'Escape': setSelectedTowerType(null); break
       }
     }
-  }, [gameState, spawnWave, waveInProgress])
-
-  const changeDifficulty = useCallback((newDifficulty: Difficulty) => {
-    setDifficulty(newDifficulty)
-    const settings = difficultySettings[newDifficulty]
-    setHealth(settings.startingHealth)
-    setMoney(settings.startingMoney)
-  }, [])
+  }, [gameState, spawnWave, waveInProgress, resetGame])
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown)
@@ -550,6 +586,22 @@ const TowerDefense: React.FC<TowerDefenseProps> = ({ onBack }) => {
       setGameState('gameOver')
     }
   }, [health])
+
+  useEffect(() => {
+    if (gameState === 'playing' && !waveInProgress) {
+      const timeout = setTimeout(() => {
+        spawnWave()
+      }, 3000)
+      return () => clearTimeout(timeout)
+    }
+  }, [gameState, waveInProgress, spawnWave])
+
+  useEffect(() => {
+    return () => {
+      spawnTimeoutsRef.current.forEach(timeoutId => clearTimeout(timeoutId))
+      spawnTimeoutsRef.current = []
+    }
+  }, [])
 
   const getGameMessage = () => {
     switch (gameState) {

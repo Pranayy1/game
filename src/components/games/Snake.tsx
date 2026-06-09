@@ -13,6 +13,12 @@ interface Position {
 type Direction = 'UP' | 'DOWN' | 'LEFT' | 'RIGHT'
 type GameState = 'playing' | 'paused' | 'gameOver' | 'starting'
 
+const speedSettings = {
+  easy: 200,
+  medium: 150,
+  hard: 100
+}
+
 const Snake: React.FC<SnakeProps> = ({ onBack }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [gameState, setGameState] = useState<GameState>('starting')
@@ -22,19 +28,17 @@ const Snake: React.FC<SnakeProps> = ({ onBack }) => {
   const [nextDirection, setNextDirection] = useState<Direction>('RIGHT')
   const [score, setScore] = useState(0)
   const [highScore, setHighScore] = useState(() => {
-    return parseInt(localStorage.getItem('snakeHighScore') || '0')
+    const saved = localStorage.getItem('snakeHighScore')
+    const parsed = saved ? parseInt(saved, 10) : 0
+    return isNaN(parsed) ? 0 : parsed
   })
+  const highScoreRef = useRef(highScore)
+  highScoreRef.current = highScore
   const [speed, setSpeed] = useState(150)
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium')
 
   const GRID_SIZE = 20
   const CANVAS_SIZE = 400
-
-  const speedSettings = {
-    easy: 200,
-    medium: 150,
-    hard: 100
-  }
 
   const generateFood = useCallback((snakeBody: Position[]): Position => {
     let newFood: Position
@@ -61,8 +65,16 @@ const Snake: React.FC<SnakeProps> = ({ onBack }) => {
   const handleKeyPress = useCallback((event: KeyboardEvent) => {
     event.preventDefault()
     
-    if (gameState === 'starting' || gameState === 'gameOver') {
+    if (gameState === 'starting') {
       if (event.code === 'Space') {
+        setGameState('playing')
+      }
+      return
+    }
+
+    if (gameState === 'gameOver') {
+      if (event.code === 'Space') {
+        resetGame()
         setGameState('playing')
       }
       return
@@ -107,7 +119,7 @@ const Snake: React.FC<SnakeProps> = ({ onBack }) => {
         setNextDirection(newDirection)
       }
     }
-  }, [direction, gameState])
+  }, [direction, gameState, resetGame])
 
   const moveSnake = useCallback(() => {
     if (gameState !== 'playing') return
@@ -153,7 +165,7 @@ const Snake: React.FC<SnakeProps> = ({ onBack }) => {
       if (head.x === food.x && head.y === food.y) {
         setScore(prev => {
           const newScore = prev + 10
-          if (newScore > highScore) {
+          if (newScore > highScoreRef.current) {
             setHighScore(newScore)
             localStorage.setItem('snakeHighScore', newScore.toString())
           }
@@ -170,7 +182,7 @@ const Snake: React.FC<SnakeProps> = ({ onBack }) => {
 
       return newSnake
     })
-  }, [gameState, nextDirection, food, generateFood, highScore])
+  }, [gameState, nextDirection, food, generateFood])
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current
@@ -269,7 +281,7 @@ const Snake: React.FC<SnakeProps> = ({ onBack }) => {
 
   useEffect(() => {
     resetGame()
-  }, [difficulty])
+  }, [difficulty, resetGame])
 
   return (
     <div className="snake-game">
@@ -375,6 +387,9 @@ const Snake: React.FC<SnakeProps> = ({ onBack }) => {
               if (gameState === 'playing') {
                 setGameState('paused')
               } else if (gameState === 'paused') {
+                setGameState('playing')
+              } else if (gameState === 'gameOver') {
+                resetGame()
                 setGameState('playing')
               } else {
                 setGameState('playing')
