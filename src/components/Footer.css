@@ -1,107 +1,48 @@
-/* Footer Styles */
-.footer {
-  background: linear-gradient(135deg, #1e293b, #334155);
-  color: #e2e8f0;
-  padding: 3rem 0 1rem;
-  margin-top: auto;
+.game-footer {
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid #e5e7eb;
+  margin-top: 48px;
 }
 
-.footer-container {
-  max-width: 1200px;
+.game-footer-inner {
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
-.footer-content {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 2rem;
-  margin-bottom: 2rem;
+.game-footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
-.footer-section h4 {
-  color: #f1f5f9;
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-  background: linear-gradient(135deg, #0ea5e9, #3b82f6);
+.game-footer-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #6366F1, #818CF8);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.footer-section p {
+.game-footer-text {
   color: #94a3b8;
-  line-height: 1.6;
+  font-size: 0.85rem;
   margin: 0;
 }
 
-.footer-section ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.footer-section li {
-  color: #94a3b8;
-  padding: 0.25rem 0;
-  transition: color 0.3s ease;
-  cursor: pointer;
-}
-
-.footer-section li:hover {
-  color: #0ea5e9;
-}
-
-.social-links {
-  display: flex;
-  gap: 1rem;
-}
-
-.social-icon {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(14, 165, 233, 0.1);
-  border: 1px solid rgba(14, 165, 233, 0.3);
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 1.2rem;
-}
-
-.social-icon:hover {
-  background: rgba(14, 165, 233, 0.2);
-  border-color: #0ea5e9;
-  transform: translateY(-2px);
-}
-
-.footer-bottom {
-  border-top: 1px solid rgba(226, 232, 240, 0.1);
-  padding-top: 2rem;
-  text-align: center;
-}
-
-.footer-bottom p {
-  color: #64748b;
-  margin: 0;
-  font-size: 0.9rem;
-}
-
-/* Responsive Design */
 @media (max-width: 768px) {
-  .footer-container {
-    padding: 0 1rem;
-  }
-  
-  .footer-content {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-  
-  .footer {
-    padding: 2rem 0 1rem;
+  .game-footer-inner {
+    padding: 20px 16px;
+    flex-direction: column;
+    text-align: center;
   }
 }

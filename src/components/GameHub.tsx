@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import './GameHub.css'
 
 type GameType = 'hub' | 'tictactoe' | 'snake' | 'memory' | 'sudoku' | 'pong' | 'towerdefense' | 'spaceinvaders'
@@ -42,56 +42,49 @@ const GameHub: React.FC<GameHubProps> = ({ onGameSelect }) => {
       title: 'Tic Tac Toe',
       description: 'Classic strategy game for two players. Get three in a row to win!',
       icon: '⭕',
-      difficulty: 'easy',
-      color: 'from-blue-400 to-blue-600'
+      difficulty: 'easy'
     },
     {
       id: 'snake',
       title: 'Snake Game',
       description: 'Guide the snake to eat food and grow longer. Avoid hitting walls!',
       icon: '🐍',
-      difficulty: 'medium',
-      color: 'from-green-400 to-green-600'
+      difficulty: 'medium'
     },
     {
       id: 'memory',
       title: 'Memory Game',
       description: 'Test your memory by matching pairs of cards. How fast can you complete it?',
       icon: '🧠',
-      difficulty: 'easy',
-      color: 'from-purple-400 to-purple-600'
+      difficulty: 'easy'
     },
     {
       id: 'sudoku',
       title: 'Sudoku',
       description: 'Fill the 9x9 grid with numbers so each row, column, and box contains all digits!',
       icon: '🔢',
-      difficulty: 'hard',
-      color: 'from-red-400 to-red-600'
+      difficulty: 'hard'
     },
     {
       id: 'pong',
       title: 'Pong',
       description: 'The original video game! Beat the AI in this classic paddle game.',
       icon: '🏏',
-      difficulty: 'easy',
-      color: 'from-cyan-400 to-cyan-600'
+      difficulty: 'easy'
     },
     {
       id: 'towerdefense',
       title: 'Tower Defense',
       description: 'Build towers to defend against waves of colorful enemies!',
       icon: '🏰',
-      difficulty: 'hard',
-      color: 'from-red-400 to-red-600'
+      difficulty: 'hard'
     },
     {
       id: 'spaceinvaders',
       title: 'Space Invaders',
       description: 'Defend Earth from alien invaders in this retro arcade classic!',
       icon: '👾',
-      difficulty: 'hard',
-      color: 'from-violet-400 to-violet-600'
+      difficulty: 'hard'
     }
   ]
 
@@ -117,102 +110,94 @@ const GameHub: React.FC<GameHubProps> = ({ onGameSelect }) => {
     }
     setStats(newStats)
     localStorage.setItem('gameHubStats', JSON.stringify(newStats))
-    
     onGameSelect(gameId as GameType)
   }
 
   return (
     <div className="game-hub fade-in-up">
-      <div className="hero-section">
-        <h1 className="hub-title">
-          <span className="title-icon">🎮</span>
+      <div className="game-hub-hero">
+        <h1 className="game-hub-title">
+          <span className="game-hub-icon">🎮</span>
           Welcome to GameHub
         </h1>
-        <p className="hub-subtitle">
+        <p className="game-hub-subtitle">
           Experience classic games with modern design and smooth animations
         </p>
       </div>
 
-      {/* Stats Section */}
-      <div className="stats-section">
-        <h2>Your Gaming Stats</h2>
-        <div className="stats-grid">
-          <div className="stat-item">
-            <span className="stat-value">{stats.totalGames}</span>
-            <span className="stat-label">Available Games</span>
+      <div className="game-hub-section">
+        <h2 className="game-hub-section-title">Your Gaming Stats</h2>
+        <div className="game-hub-stats">
+          <div className="game-hub-stat">
+            <span className="game-stat-value">{stats.totalGames}</span>
+            <span className="game-stat-label">Available Games</span>
           </div>
-          <div className="stat-item">
-            <span className="stat-value">{stats.gamesPlayed}</span>
-            <span className="stat-label">Games Played</span>
+          <div className="game-hub-stat">
+            <span className="game-stat-value">{stats.gamesPlayed}</span>
+            <span className="game-stat-label">Games Played</span>
           </div>
-          <div className="stat-item">
-            <span className="stat-value">{stats.winStreak}</span>
-            <span className="stat-label">Win Streak</span>
+          <div className="game-hub-stat">
+            <span className="game-stat-value">{stats.winStreak}</span>
+            <span className="game-stat-label">Win Streak</span>
           </div>
-          <div className="stat-item">
-            <span className="stat-value">⭐</span>
-            <span className="stat-label">Level: Beginner</span>
+          <div className="game-hub-stat">
+            <span className="game-stat-value">⭐</span>
+            <span className="game-stat-label">Level: Beginner</span>
           </div>
         </div>
       </div>
 
-      {/* Games Grid */}
-      <div className="games-section">
-        <h2>Choose Your Game</h2>
-        <div className="games-grid">
+      <div className="game-hub-section">
+        <h2 className="game-hub-section-title">Choose Your Game</h2>
+        <div className="game-hub-grid">
           {games.map((game, index) => (
             <div
               key={game.id}
-              className="game-card"
+              className="game-hub-card"
               onClick={() => handleGameSelect(game.id)}
-              style={{ animationDelay: `${index * 0.1}s` }}
+              style={{ animationDelay: `${index * 0.08}s` }}
             >
               <div className="game-card-header">
                 <span className="game-card-icon">{game.icon}</span>
-                <span className={`difficulty ${game.difficulty}`}>
+                <span className={`game-card-difficulty ${game.difficulty}`}>
                   {game.difficulty}
                 </span>
               </div>
-              
-              <div className="game-card-content">
+              <div className="game-card-body">
                 <h3>{game.title}</h3>
                 <p>{game.description}</p>
               </div>
-              
               <div className="game-card-footer">
-                <button className="play-btn">
-                  <span>Play Now</span>
-                  <span className="play-icon">▶️</span>
+                <button className="game-play-btn">
+                  Play Now
+                  <span className="game-play-arrow">▶</span>
                 </button>
               </div>
-              
-              <div className="card-glow"></div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Features Section */}
-      <div className="features-section">
-        <h2>Why Choose GameHub?</h2>
-        <div className="features-grid">
-          <div className="feature-item">
-            <span className="feature-icon">🎨</span>
+      <div className="game-hub-section">
+        <h2 className="game-hub-section-title">Why Choose GameHub?</h2>
+        <div className="game-hub-features">
+          <div className="game-feature">
+            <span className="game-feature-icon">🎨</span>
             <h3>Modern Design</h3>
             <p>Beautiful, responsive interface with smooth animations</p>
           </div>
-          <div className="feature-item">
-            <span className="feature-icon">⚡</span>
+          <div className="game-feature">
+            <span className="game-feature-icon">⚡</span>
             <h3>Fast Performance</h3>
             <p>Built with React and Vite for lightning-fast gameplay</p>
           </div>
-          <div className="feature-item">
-            <span className="feature-icon">📱</span>
+          <div className="game-feature">
+            <span className="game-feature-icon">📱</span>
             <h3>Mobile Friendly</h3>
             <p>Play anywhere, anytime on any device</p>
           </div>
-          <div className="feature-item">
-            <span className="feature-icon">🏆</span>
+          <div className="game-feature">
+            <span className="game-feature-icon">🏆</span>
             <h3>Score Tracking</h3>
             <p>Keep track of your progress and achievements</p>
           </div>
