@@ -69,6 +69,8 @@ const SpaceInvaders: React.FC<SpaceInvadersProps> = ({ onBack }) => {
   const keysRef = useRef<Set<string>>(new Set())
   const lastShotRef = useRef<number>(0)
   const nextIdRef = useRef(1)
+  const invadersRef = useRef<Invader[]>([])
+  const playerRef = useRef<Player>({ x: 0, y: 0, width: 0, height: 0 })
   
   const [gameState, setGameState] = useState<GameState>('starting')
   const [score, setScore] = useState(0)
@@ -97,10 +99,19 @@ const SpaceInvaders: React.FC<SpaceInvadersProps> = ({ onBack }) => {
     height: 30
   })
   
+  playerRef.current = player
+
   const [bullets, setBullets] = useState<Bullet[]>([])
+  const bulletsRef = useRef(bullets)
+  bulletsRef.current = bullets
   const [invaders, setInvaders] = useState<Invader[]>([])
+  invadersRef.current = invaders
   const [powerUps, setPowerUps] = useState<PowerUp[]>([])
+  const powerUpsRef = useRef(powerUps)
+  powerUpsRef.current = powerUps
   const [particles, setParticles] = useState<Particle[]>([])
+  const particlesRef = useRef(particles)
+  particlesRef.current = particles
   const [playerShield, setPlayerShield] = useState(0)
   const [rapidFire, setRapidFire] = useState(0)
   const [multiShot, setMultiShot] = useState(0)
@@ -219,7 +230,7 @@ const SpaceInvaders: React.FC<SpaceInvadersProps> = ({ onBack }) => {
     if (event.code === 'Space') {
       event.preventDefault()
       if (gameState === 'starting' || gameState === 'gameOver' || gameState === 'won') {
-        resetGame()
+        resetGameRef.current()
       } else if (gameState === 'playing') {
         setGameState('paused')
       } else if (gameState === 'paused') {
@@ -230,7 +241,6 @@ const SpaceInvaders: React.FC<SpaceInvadersProps> = ({ onBack }) => {
     if (gameState === 'playing' && event.code === 'KeyF') {
       shootBullet()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState, shootBullet])
 
   const handleKeyUp = useCallback((event: KeyboardEvent) => {
@@ -255,7 +265,9 @@ const SpaceInvaders: React.FC<SpaceInvadersProps> = ({ onBack }) => {
         newY = Math.min(CANVAS_HEIGHT - prev.height, prev.y + PLAYER_SPEED)
       }
       
-      return { ...prev, x: newX, y: newY }
+      const updated = { ...prev, x: newX, y: newY }
+      playerRef.current = updated
+      return updated
     })
 
     if (keysRef.current.has('KeyF')) {
@@ -270,25 +282,10 @@ const SpaceInvaders: React.FC<SpaceInvadersProps> = ({ onBack }) => {
         y: bullet.y + bullet.dy
       })).filter(bullet => bullet.y > -bullet.height && bullet.y < CANVAS_HEIGHT + bullet.height)
       
-      // Enemy shooting
-      if (Math.random() < 0.002 * level) {
-        const shootingInvader = invaders[Math.floor(Math.random() * invaders.length)]
-        if (shootingInvader) {
-          updated.push({
-            id: nextIdRef.current++,
-            x: shootingInvader.x + shootingInvader.width / 2,
-            y: shootingInvader.y + shootingInvader.height,
-            dy: 3,
-            width: 3,
-            height: 8,
-            isPlayerBullet: false
-          })
-        }
-      }
-      
+      bulletsRef.current = updated
       return updated
     })
-  }, [invaders, level])
+  }, [level])
 
   const invaderDirection = useRef(1)
 
@@ -309,41 +306,47 @@ const SpaceInvaders: React.FC<SpaceInvadersProps> = ({ onBack }) => {
         invaderDirection.current = -invaderDirection.current
       }
       
-      return prev.map(invader => {
+      const updated = prev.map(invader => {
         if (moveDown) {
           return { ...invader, y: invader.y + 20 }
         } else {
           return { ...invader, x: invader.x + speed * invaderDirection.current }
         }
       })
+      invadersRef.current = updated
+      return updated
     })
   }, [level])
 
   const updatePowerUps = useCallback(() => {
     setPowerUps(prev => {
-      return prev.filter(powerUp => {
-        powerUp.y += powerUp.dy
-        
-        // Check collision with player
+      const currentPlayer = playerRef.current
+      const updated = prev.reduce<PowerUp[]>((acc, powerUp) => {
+        const newY = powerUp.y + powerUp.dy
         if (
-          powerUp.x < player.x + player.width &&
-          powerUp.x + 30 > player.x &&
-          powerUp.y < player.y + player.height &&
-          powerUp.y + 30 > player.y
+          powerUp.x < currentPlayer.x + currentPlayer.width &&
+          powerUp.x + 30 > currentPlayer.x &&
+          newY < currentPlayer.y + currentPlayer.height &&
+          newY + 30 > currentPlayer.y
         ) {
           activatePowerUp(powerUp.type)
           createParticles(powerUp.x + 15, powerUp.y + 15, '#22c55e', 12)
-          return false // Remove power-up
+          return acc
         }
         
-        return powerUp.y < CANVAS_HEIGHT
-      })
+        if (newY < CANVAS_HEIGHT) {
+          acc.push({ ...powerUp, y: newY })
+        }
+        return acc
+      }, [])
+      powerUpsRef.current = updated
+      return updated
     })
-  }, [player, activatePowerUp, createParticles])
+  }, [activatePowerUp, createParticles])
 
   const updateParticles = useCallback(() => {
     setParticles(prev => {
-      return prev.map(particle => ({
+      const updated = prev.map(particle => ({
         ...particle,
         x: particle.x + particle.dx,
         y: particle.y + particle.dy,
@@ -351,74 +354,77 @@ const SpaceInvaders: React.FC<SpaceInvadersProps> = ({ onBack }) => {
         dy: particle.dy * 0.98,
         life: particle.life + 1
       })).filter(particle => particle.life < particle.maxLife)
+      particlesRef.current = updated
+      return updated
     })
   }, [])
 
   const checkCollisions = useCallback(() => {
-    const bulletsToRemove = new Set<number>()
-    const invadersToRemove = new Set<number>()
-    const invadersToUpdate: Map<number, Invader> = new Map()
+    const currentInvaders = invadersRef.current
+    const currentBullets = bulletsRef.current
+    const currentPlayer = playerRef.current
+
+    if (currentInvaders.length === 0 || currentBullets.length === 0) return
+
+    const killedIds = new Set<number>()
+    const damagedMap = new Map<number, number>()
+    const remainingBullets: Bullet[] = []
     let scoreGain = 0
     const powerUpSpawns: { x: number; y: number }[] = []
     const particleSpawns: { x: number; y: number; color: string }[] = []
     let playerHit = false
-    let levelCompleted = false
 
-    // Bullet vs Invader collisions
-    setBullets(prevBullets => {
-      const remainingBullets = prevBullets.filter(bullet => {
-        if (!bullet.isPlayerBullet) return true
-
-        for (const invader of invaders) {
-          if (
-            bullet.x < invader.x + invader.width &&
-            bullet.x + bullet.width > invader.x &&
-            bullet.y < invader.y + invader.height &&
-            bullet.y + bullet.height > invader.y
-          ) {
-            bulletsToRemove.add(bullet.id)
-            const newHealth = invader.health - 1
-            particleSpawns.push({ x: invader.x + invader.width / 2, y: invader.y + invader.height / 2, color: invaderTypes[invader.type].color })
-
-            if (newHealth <= 0) {
-              invadersToRemove.add(invader.id)
-              scoreGain += invader.points
-              powerUpSpawns.push({ x: invader.x, y: invader.y })
-            } else {
-              invadersToUpdate.set(invader.id, { ...invader, health: newHealth })
-            }
-            return false
-          }
-        }
-        return true
-      })
-
-      // Bullet vs Player collisions
-      const finalBullets = remainingBullets.filter(bullet => {
-        if (bullet.isPlayerBullet) return true
-
+    for (const bullet of currentBullets) {
+      if (!bullet.isPlayerBullet) {
         if (
-          bullet.x < player.x + player.width &&
-          bullet.x + bullet.width > player.x &&
-          bullet.y < player.y + player.height &&
-          bullet.y + bullet.height > player.y
+          bullet.x < currentPlayer.x + currentPlayer.width &&
+          bullet.x + bullet.width > currentPlayer.x &&
+          bullet.y < currentPlayer.y + currentPlayer.height &&
+          bullet.y + bullet.height > currentPlayer.y
         ) {
           playerHit = true
-          return false
+          continue
         }
-        return true
-      })
+        remainingBullets.push(bullet)
+        continue
+      }
 
-      return finalBullets
-    })
+      let bulletHit = false
+      for (const invader of currentInvaders) {
+        if (killedIds.has(invader.id)) continue
+        if (
+          bullet.x < invader.x + invader.width &&
+          bullet.x + bullet.width > invader.x &&
+          bullet.y < invader.y + invader.height &&
+          bullet.y + bullet.height > invader.y
+        ) {
+          bulletHit = true
+          const newHealth = invader.health - 1
+          particleSpawns.push({ x: invader.x + invader.width / 2, y: invader.y + invader.height / 2, color: invaderTypes[invader.type].color })
 
-    // Apply score gain
+          if (newHealth <= 0) {
+            killedIds.add(invader.id)
+            scoreGain += invader.points
+            powerUpSpawns.push({ x: invader.x, y: invader.y })
+          } else {
+            damagedMap.set(invader.id, newHealth)
+          }
+          break
+        }
+      }
+
+      if (!bulletHit) {
+        remainingBullets.push(bullet)
+      }
+    }
+
+    // Apply score
     if (scoreGain > 0) {
       setScore(prev => prev + scoreGain)
     }
 
     // Apply power-up spawns
-    powerUpSpawns.forEach(spawn => {
+    for (const spawn of powerUpSpawns) {
       if (Math.random() < 0.1) {
         const types: PowerUp['type'][] = ['rapidFire', 'shield', 'multiShot', 'health']
         const type = types[Math.floor(Math.random() * types.length)]
@@ -430,35 +436,36 @@ const SpaceInvaders: React.FC<SpaceInvadersProps> = ({ onBack }) => {
           dy: 2
         }])
       }
-    })
-
-    // Apply particle spawns
-    particleSpawns.forEach(spawn => {
-      createParticles(spawn.x, spawn.y, spawn.color)
-    })
-
-    // Update invaders
-    if (invadersToRemove.size > 0 || invadersToUpdate.size > 0) {
-      setInvaders(prev => {
-        const updated = prev.map(invader => {
-          if (invadersToRemove.has(invader.id)) return null
-          if (invadersToUpdate.has(invader.id)) return invadersToUpdate.get(invader.id)!
-          return invader
-        }).filter(invader => invader !== null) as Invader[]
-
-        if (updated.length === 0) {
-          levelCompleted = true
-        }
-
-        return updated
-      })
-    } else if (invaders.length === 0) {
-      levelCompleted = true
     }
 
-    if (levelCompleted) {
-      setLevel(prev => prev + 1)
-      createInvaders(levelRef.current + 1)
+    // Apply particle spawns
+    for (const spawn of particleSpawns) {
+      createParticles(spawn.x, spawn.y, spawn.color)
+    }
+
+    setBullets(remainingBullets)
+
+    if (killedIds.size > 0 || damagedMap.size > 0) {
+      setInvaders(prev => {
+        return prev.map(invader => {
+          if (killedIds.has(invader.id)) return null
+          if (damagedMap.has(invader.id)) {
+            return { ...invader, health: damagedMap.get(invader.id)! }
+          }
+          return invader
+        }).filter(inv => inv !== null) as Invader[]
+      })
+    }
+
+    const allKilled = currentInvaders.length > 0 && currentInvaders.every(inv => killedIds.has(inv.id))
+    if (allKilled) {
+      const nextLevel = levelRef.current + 1
+      if (nextLevel > 10) {
+        setGameState('won')
+      } else {
+        setLevel(prev => prev + 1)
+        createInvaders(nextLevel)
+      }
     }
 
     // Handle player hit
@@ -471,18 +478,17 @@ const SpaceInvaders: React.FC<SpaceInvadersProps> = ({ onBack }) => {
           }
           return newLives
         })
-        createParticles(player.x + player.width / 2, player.y + player.height / 2, '#ef4444', 15)
+        createParticles(currentPlayer.x + currentPlayer.width / 2, currentPlayer.y + currentPlayer.height / 2, '#ef4444', 15)
       } else {
-        createParticles(player.x + player.width / 2, player.y + player.height / 2, '#06b6d4', 8)
+        createParticles(currentPlayer.x + currentPlayer.width / 2, currentPlayer.y + currentPlayer.height / 2, '#06b6d4', 8)
       }
     }
 
     // Invader reaching bottom
-    if (invaders.some(invader => invader.y + invader.height >= player.y)) {
+    if (currentInvaders.some(invader => invader.y + invader.height >= currentPlayer.y)) {
       setGameState('gameOver')
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [invaders, player, score, highScore, playerShield, createParticles, level, createInvaders])
+  }, [playerShield, createParticles])
 
   const updatePowerUpTimers = useCallback(() => {
     setRapidFire(prev => Math.max(0, prev - 1))
@@ -625,6 +631,8 @@ const SpaceInvaders: React.FC<SpaceInvadersProps> = ({ onBack }) => {
     animationRef.current = requestAnimationFrame(gameLoop)
   }, [gameState, updatePlayer, updateBullets, updateInvaders, updatePowerUps, updateParticles, updatePowerUpTimers, checkCollisions, draw])
 
+  const resetGameRef = useRef<() => void>(() => {})
+
   const resetGame = useCallback(() => {
     nextIdRef.current = 1
     invaderDirection.current = 1
@@ -646,6 +654,8 @@ const SpaceInvaders: React.FC<SpaceInvadersProps> = ({ onBack }) => {
     createInvaders(1)
     setGameState('playing')
   }, [createInvaders])
+
+  resetGameRef.current = resetGame
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown)

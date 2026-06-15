@@ -42,6 +42,7 @@ interface Projectile {
   y: number
   targetX: number
   targetY: number
+  targetEnemyId: number
   damage: number
   speed: number
   type: string
@@ -121,9 +122,17 @@ const TowerDefense: React.FC<TowerDefenseProps> = ({ onBack }) => {
   const [score, setScore] = useState(0)
   const [selectedTowerType, setSelectedTowerType] = useState<Tower['type'] | null>(null)
   const [enemies, setEnemies] = useState<Enemy[]>([])
+  const enemiesRef = useRef(enemies)
+  enemiesRef.current = enemies
   const [towers, setTowers] = useState<Tower[]>([])
+  const towersRef = useRef(towers)
+  towersRef.current = towers
   const [projectiles, setProjectiles] = useState<Projectile[]>([])
+  const projectilesRef = useRef(projectiles)
+  projectilesRef.current = projectiles
   const [waveInProgress, setWaveInProgress] = useState(false)
+  const totalEnemiesInWaveRef = useRef(0)
+  const spawnedEnemiesRef = useRef(0)
   
   const CANVAS_WIDTH = 800
   const CANVAS_HEIGHT = 600
@@ -136,6 +145,8 @@ const TowerDefense: React.FC<TowerDefenseProps> = ({ onBack }) => {
     const settings = difficultySettings[difficulty]
     const baseEnemyCount = Math.min(5 + wave * 2, 25)
     const enemyCount = Math.floor(baseEnemyCount * settings.enemyCount)
+    totalEnemiesInWaveRef.current = enemyCount
+    spawnedEnemiesRef.current = 0
     
     for (let i = 0; i < enemyCount; i++) {
       let type: Enemy['type'] = 'normal'
@@ -156,6 +167,7 @@ const TowerDefense: React.FC<TowerDefenseProps> = ({ onBack }) => {
       
       const timeoutId = window.setTimeout(() => {
         const enemyId = nextIdRef.current++
+        spawnedEnemiesRef.current++
         setEnemies(prev => [...prev, {
           id: enemyId,
           x: path[0].x,
@@ -271,10 +283,10 @@ const TowerDefense: React.FC<TowerDefenseProps> = ({ onBack }) => {
         return { ...enemy, x: enemy.x + moveX, y: enemy.y + moveY }
       }).filter(enemy => enemy !== null) as Enemy[]
       
-      if (updated.length === 0 && waveInProgress) {
+      if (updated.length === 0 && waveInProgress && spawnedEnemiesRef.current >= totalEnemiesInWaveRef.current) {
         setWaveInProgress(false)
         setWave(w => w + 1)
-        setMoney(m => m + 50 + waveRef.current * 10) // Wave completion bonus
+        setMoney(m => m + 50 + waveRef.current * 10)
       }
       
       return updated
@@ -283,11 +295,11 @@ const TowerDefense: React.FC<TowerDefenseProps> = ({ onBack }) => {
 
   const updateTowers = useCallback(() => {
     const currentTime = Date.now()
+    const currentEnemies = enemiesRef.current
     const newProjectiles: Projectile[] = []
-    const currentEnemies = enemies
 
     setTowers(prevTowers => {
-      const updatedTowers = prevTowers.map(tower => {
+      return prevTowers.map(tower => {
         if (currentTime - tower.lastFire < tower.fireRate) return tower
 
         let nearestEnemy: Enemy | undefined = undefined
@@ -308,8 +320,9 @@ const TowerDefense: React.FC<TowerDefenseProps> = ({ onBack }) => {
             y: tower.y,
             targetX: nearestEnemy.x,
             targetY: nearestEnemy.y,
+            targetEnemyId: nearestEnemy.id,
             damage: tower.damage,
-            speed: 300,
+            speed: 5,
             type: tower.type
           })
 
@@ -318,52 +331,74 @@ const TowerDefense: React.FC<TowerDefenseProps> = ({ onBack }) => {
 
         return tower
       })
-
-      return updatedTowers
     })
 
     if (newProjectiles.length > 0) {
       setProjectiles(prev => [...prev, ...newProjectiles])
     }
-  }, [enemies])
+  }, [])
 
   const updateProjectiles = useCallback(() => {
+    const currentEnemies = enemiesRef.current
+    
     setProjectiles(prev => {
-      return prev.filter(projectile => {
-        const dx = projectile.targetX - projectile.x
-        const dy = projectile.targetY - projectile.y
+      const remaining: Projectile[] = []
+      const hits: { targetX: number; targetY: number; damage: number }[] = []
+      
+      for (const projectile of prev) {
+        const targetEnemy = currentEnemies.find(e => e.id === projectile.targetEnemyId)
+        let targetX = projectile.targetX
+        let targetY = projectile.targetY
+        
+        if (targetEnemy) {
+          targetX = targetEnemy.x
+          targetY = targetEnemy.y
+        }
+        
+        const dx = targetX - projectile.x
+        const dy = targetY - projectile.y
         const distance = Math.sqrt(dx * dx + dy * dy)
         
         if (distance < 10) {
-          // Hit target - damage enemies in area
-          setEnemies(enemyPrev => enemyPrev.map(enemy => {
-            const enemyDistance = Math.sqrt(
-              (enemy.x - projectile.targetX) ** 2 + (enemy.y - projectile.targetY) ** 2
-            )
-            
-            if (enemyDistance < 30) {
-              const newHealth = enemy.health - projectile.damage
-              if (newHealth <= 0) {
-                setMoney(m => m + enemy.reward)
-                setScore(s => s + enemy.reward * 10)
-                return null // Mark for removal
-              }
-              return { ...enemy, health: newHealth }
-            }
-            return enemy
-          }).filter(enemy => enemy !== null) as Enemy[])
-          
-          return false // Remove projectile
+          hits.push({ targetX, targetY, damage: projectile.damage })
+          continue
         }
         
-        const moveX = (dx / distance) * projectile.speed / 60
-        const moveY = (dy / distance) * projectile.speed / 60
+        const moveX = (dx / distance) * projectile.speed
+        const moveY = (dy / distance) * projectile.speed
         
-        projectile.x += moveX
-        projectile.y += moveY
-        
-        return true
-      })
+        remaining.push({
+          ...projectile,
+          x: projectile.x + moveX,
+          y: projectile.y + moveY
+        })
+      }
+      
+      if (hits.length > 0) {
+        setEnemies(enemyPrev => {
+          let updated = enemyPrev
+          for (const hit of hits) {
+            updated = updated.map(enemy => {
+              const enemyDistance = Math.sqrt(
+                (enemy.x - hit.targetX) ** 2 + (enemy.y - hit.targetY) ** 2
+              )
+              if (enemyDistance < 30) {
+                const newHealth = enemy.health - hit.damage
+                if (newHealth <= 0) {
+                  setMoney(m => m + enemy.reward)
+                  setScore(s => s + enemy.reward * 10)
+                  return null
+                }
+                return { ...enemy, health: newHealth }
+              }
+              return enemy
+            }).filter(e => e !== null) as Enemy[]
+          }
+          return updated
+        })
+      }
+      
+      return remaining
     })
   }, [])
 

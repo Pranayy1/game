@@ -17,7 +17,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentGame, onHomeClick }) => {
         
         <div className="navbar-actions">
           <a href="https://pranayy1.github.io/Studyplay/" className="studyplay-link">
-            📚 StudyPlay
+             StudyPlay
           </a>
           {currentGame !== 'hub' && (
             <button className="btn btn-secondary" onClick={onHomeClick}>

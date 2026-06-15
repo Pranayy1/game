@@ -17,6 +17,7 @@ const difficultySettings = {
 const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
   const [grid, setGrid] = useState<SudokuGrid>(Array(9).fill(null).map(() => Array(9).fill(null)))
   const [initialGrid, setInitialGrid] = useState<SudokuGrid>(Array(9).fill(null).map(() => Array(9).fill(null)))
+  const [solutionGrid, setSolutionGrid] = useState<SudokuGrid>(Array(9).fill(null).map(() => Array(9).fill(null)))
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null)
   const [difficulty, setDifficulty] = useState<Difficulty>('medium')
   const [gameWon, setGameWon] = useState(false)
@@ -111,6 +112,7 @@ const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
     
     setGrid(puzzle.map(row => [...row]))
     setInitialGrid(puzzle.map(row => [...row]))
+    setSolutionGrid(completeGrid.map(row => [...row]))
     setGameWon(false)
     setErrors(new Set())
     setHints(3)
@@ -195,18 +197,20 @@ const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
     
     const randomCell = emptyCells[Math.floor(Math.random() * emptyCells.length)]
     const { row, col } = randomCell
+    const correctNum = solutionGrid[row][col]
     
-    // Find the correct number for this cell
-    for (let num = 1; num <= 9; num++) {
-      const testGrid = grid.map(r => [...r])
-      testGrid[row][col] = num
-      if (isValidNumber(testGrid, row, col, num)) {
-        const newGrid = grid.map(r => [...r])
-        newGrid[row][col] = num
-        setGrid(newGrid)
-        setHints(prev => prev - 1)
-        break
-      }
+    if (correctNum != null) {
+      const newGrid = grid.map(r => [...r])
+      newGrid[row][col] = correctNum
+      setGrid(newGrid)
+      setHints(prev => prev - 1)
+      
+      const errorKey = `${row}-${col}`
+      setErrors(prev => {
+        const newErrors = new Set(prev)
+        newErrors.delete(errorKey)
+        return newErrors
+      })
     }
   }
 
@@ -280,6 +284,8 @@ const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
                    Math.floor(selectedCell.col / 3) === Math.floor(colIndex / 3))
                 )
                 
+                const isBoxRight = (colIndex + 1) % 3 === 0 && colIndex !== 8
+                const isBoxBottom = (rowIndex + 1) % 3 === 0 && rowIndex !== 8
                 return (
                   <div
                     key={colIndex}
@@ -289,6 +295,8 @@ const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
                       ${isInitial ? 'initial' : 'user-input'}
                       ${hasError ? 'error' : ''}
                       ${isHighlighted ? 'highlighted' : ''}
+                      ${isBoxRight ? 'box-border-right' : ''}
+                      ${isBoxBottom ? 'box-border-bottom' : ''}
                     `}
                     onClick={() => handleCellClick(rowIndex, colIndex)}
                   >
