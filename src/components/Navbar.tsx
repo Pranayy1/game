@@ -7,20 +7,6 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ currentGame, onHomeClick }) => {
-  const getGameTitle = (game: string) => {
-    const titles: { [key: string]: string } = {
-      hub: 'Game Hub',
-      tictactoe: 'Tic Tac Toe',
-      snake: 'Snake Game',
-      memory: 'Memory Game',
-      sudoku: 'Sudoku',
-      pong: 'Pong',
-      towerdefense: 'Tower Defense',
-      spaceinvaders: 'Space Invaders'
-    }
-    return titles[game] || 'Game Hub'
-  }
-
   return (
     <nav className="navbar">
       <div className="navbar-container">
@@ -31,8 +17,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentGame, onHomeClick }) => {
         
         <div className="navbar-actions">
           <a href="https://pranayy1.github.io/Studyplay/" className="studyplay-link">
-            <span></span>
-            StudyPlay
+            📚 StudyPlay
           </a>
           {currentGame !== 'hub' && (
             <button className="btn btn-secondary" onClick={onHomeClick}>
