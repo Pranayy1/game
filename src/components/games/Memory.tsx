@@ -79,11 +79,13 @@ const Memory: React.FC<MemoryProps> = ({ onBack }) => {
           updatedCards[firstCard].isMatched = true
           updatedCards[secondCard].isMatched = true
           setCards(updatedCards)
-          setMatches(prev => prev + 1)
-          
-          if (matchesRef.current + 1 === (difficulty * difficulty) / 2) {
-            setGameWon(true)
-          }
+          setMatches(prev => {
+            const newMatches = prev + 1
+            if (newMatches === (difficulty * difficulty) / 2) {
+              setGameWon(true)
+            }
+            return newMatches
+          })
         } else {
           // No match
           const updatedCards = [...newCards]

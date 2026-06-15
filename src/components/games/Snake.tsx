@@ -63,6 +63,8 @@ const Snake: React.FC<SnakeProps> = ({ onBack }) => {
   }, [difficulty, generateFood])
 
   const handleKeyPress = useCallback((event: KeyboardEvent) => {
+    const isGameKey = ['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW', 'KeyS', 'KeyA', 'KeyD'].includes(event.code)
+    if (!isGameKey) return
     event.preventDefault()
     
     if (gameState === 'starting') {
@@ -153,12 +155,6 @@ const Snake: React.FC<SnakeProps> = ({ onBack }) => {
         return currentSnake
       }
 
-      // Check self collision
-      if (newSnake.some(segment => segment.x === head.x && segment.y === head.y)) {
-        setGameState('gameOver')
-        return currentSnake
-      }
-
       newSnake.unshift(head)
 
       // Check food collision
@@ -178,6 +174,12 @@ const Snake: React.FC<SnakeProps> = ({ onBack }) => {
         setSpeed(prev => Math.max(prev - 2, 80))
       } else {
         newSnake.pop()
+      }
+
+      // Check self collision (after pop to avoid false positive with tail)
+      if (newSnake.some((segment, i) => i > 0 && segment.x === head.x && segment.y === head.y)) {
+        setGameState('gameOver')
+        return currentSnake
       }
 
       return newSnake

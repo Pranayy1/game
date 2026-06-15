@@ -47,21 +47,7 @@ const Pong: React.FC<PongProps> = ({ onBack }) => {
   const BALL_RADIUS = 8
   const WINNING_SCORE = 5
 
-  const [playerPaddle, setPlayerPaddle] = useState<Paddle>({
-    x: 30,
-    y: CANVAS_HEIGHT / 2 - PADDLE_HEIGHT / 2,
-    width: PADDLE_WIDTH,
-    height: PADDLE_HEIGHT
-  })
-
-  const [aiPaddle, setAiPaddle] = useState<Paddle>({
-    x: CANVAS_WIDTH - 30 - PADDLE_WIDTH,
-    y: CANVAS_HEIGHT / 2 - PADDLE_HEIGHT / 2,
-    width: PADDLE_WIDTH,
-    height: PADDLE_HEIGHT
-  })
-
-  const [ball, setBall] = useState<Ball>({
+  const ballRef = useRef<Ball>({
     x: CANVAS_WIDTH / 2,
     y: CANVAS_HEIGHT / 2,
     dx: 5,
@@ -69,15 +55,35 @@ const Pong: React.FC<PongProps> = ({ onBack }) => {
     radius: BALL_RADIUS
   })
 
+  const playerPaddleRef = useRef<Paddle>({
+    x: 30,
+    y: CANVAS_HEIGHT / 2 - PADDLE_HEIGHT / 2,
+    width: PADDLE_WIDTH,
+    height: PADDLE_HEIGHT
+  })
+
+  const aiPaddleRef = useRef<Paddle>({
+    x: CANVAS_WIDTH - 30 - PADDLE_WIDTH,
+    y: CANVAS_HEIGHT / 2 - PADDLE_HEIGHT / 2,
+    width: PADDLE_WIDTH,
+    height: PADDLE_HEIGHT
+  })
+
+  const [ball, setBall] = useState<Ball>(ballRef.current)
+  const [playerPaddle, setPlayerPaddle] = useState<Paddle>(playerPaddleRef.current)
+  const [aiPaddle, setAiPaddle] = useState<Paddle>(aiPaddleRef.current)
+
   const resetBall = useCallback(() => {
     const settings = difficultySettings[difficulty]
-    setBall({
+    const newBall = {
       x: CANVAS_WIDTH / 2,
       y: CANVAS_HEIGHT / 2,
       dx: (Math.random() > 0.5 ? 5 : -5) * settings.ballSpeedMultiplier,
       dy: (Math.random() - 0.5) * 6 * settings.ballSpeedMultiplier,
       radius: BALL_RADIUS
-    })
+    }
+    ballRef.current = newBall
+    setBall(newBall)
   }, [difficulty])
 
   const resetGame = useCallback(() => {
@@ -86,8 +92,11 @@ const Pong: React.FC<PongProps> = ({ onBack }) => {
       resetTimeoutRef.current = undefined
     }
     setScore({ player: 0, ai: 0 })
-    setPlayerPaddle(prev => ({ ...prev, y: CANVAS_HEIGHT / 2 - PADDLE_HEIGHT / 2 }))
-    setAiPaddle(prev => ({ ...prev, y: CANVAS_HEIGHT / 2 - PADDLE_HEIGHT / 2 }))
+    const resetY = CANVAS_HEIGHT / 2 - PADDLE_HEIGHT / 2
+    playerPaddleRef.current = { x: 30, y: resetY, width: PADDLE_WIDTH, height: PADDLE_HEIGHT }
+    aiPaddleRef.current = { x: CANVAS_WIDTH - 30 - PADDLE_WIDTH, y: resetY, width: PADDLE_WIDTH, height: PADDLE_HEIGHT }
+    setPlayerPaddle({ ...playerPaddleRef.current })
+    setAiPaddle({ ...aiPaddleRef.current })
     resetBall()
     setGameState('starting')
   }, [resetBall])
@@ -114,121 +123,114 @@ const Pong: React.FC<PongProps> = ({ onBack }) => {
     keysRef.current.delete(event.code)
   }, [])
 
-  const updatePaddles = useCallback((currentBall: Ball) => {
+  const updatePaddles = useCallback(() => {
     const PADDLE_SPEED = 6
+    const ball = ballRef.current
 
     // Update player paddle
-    setPlayerPaddle(prev => {
-      let newY = prev.y
-      
-      if (keysRef.current.has('ArrowUp') || keysRef.current.has('KeyW')) {
-        newY = Math.max(0, prev.y - PADDLE_SPEED)
-      }
-      if (keysRef.current.has('ArrowDown') || keysRef.current.has('KeyS')) {
-        newY = Math.min(CANVAS_HEIGHT - PADDLE_HEIGHT, prev.y + PADDLE_SPEED)
-      }
-      
-      return { ...prev, y: newY }
-    })
+    let newPlayerY = playerPaddleRef.current.y
+    if (keysRef.current.has('ArrowUp') || keysRef.current.has('KeyW')) {
+      newPlayerY = Math.max(0, playerPaddleRef.current.y - PADDLE_SPEED)
+    }
+    if (keysRef.current.has('ArrowDown') || keysRef.current.has('KeyS')) {
+      newPlayerY = Math.min(CANVAS_HEIGHT - PADDLE_HEIGHT, playerPaddleRef.current.y + PADDLE_SPEED)
+    }
+    playerPaddleRef.current = { ...playerPaddleRef.current, y: newPlayerY }
 
     // Update AI paddle with improved logic
     const settings = difficultySettings[difficulty]
-    setAiPaddle(prev => {
-      const paddleCenter = prev.y + PADDLE_HEIGHT / 2
-      const ballCenter = currentBall.y
-      const diff = ballCenter - paddleCenter
-      
-      let newY = prev.y
-      
-      // Only move AI paddle if ball is moving towards it or is close
-      if (currentBall.dx > 0 || currentBall.x > CANVAS_WIDTH / 2) {
-        if (Math.abs(diff) > 5) {
-          if (diff > 0) {
-            newY = Math.min(CANVAS_HEIGHT - PADDLE_HEIGHT, prev.y + settings.aiSpeed)
-          } else {
-            newY = Math.max(0, prev.y - settings.aiSpeed)
-          }
-        }
+    const paddleCenter = aiPaddleRef.current.y + PADDLE_HEIGHT / 2
+    const ballCenter = ball.y
+    const diff = ballCenter - paddleCenter
+    
+    let newAiY = aiPaddleRef.current.y
+    if (ball.dx > 0 || ball.x > CANVAS_WIDTH / 2) {
+      if (Math.abs(diff) > 5) {
+        newAiY = diff > 0
+          ? Math.min(CANVAS_HEIGHT - PADDLE_HEIGHT, aiPaddleRef.current.y + settings.aiSpeed)
+          : Math.max(0, aiPaddleRef.current.y - settings.aiSpeed)
       }
-      
-      return { ...prev, y: newY }
-    })
+    }
+    aiPaddleRef.current = { ...aiPaddleRef.current, y: newAiY }
   }, [difficulty])
 
   const updateBall = useCallback(() => {
-    setBall(prev => {
-      const newX = prev.x + prev.dx
-      const newY = prev.y + prev.dy
-      let newDx = prev.dx
-      let newDy = prev.dy
+    const prev = ballRef.current
+    const pp = playerPaddleRef.current
+    const ap = aiPaddleRef.current
+    const newX = prev.x + prev.dx
+    const newY = prev.y + prev.dy
+    let newDx = prev.dx
+    let newDy = prev.dy
 
-      // Ball collision with top and bottom walls
-      if (newY <= prev.radius || newY >= CANVAS_HEIGHT - prev.radius) {
-        newDy = -newDy
-      }
+    // Ball collision with top and bottom walls
+    if (newY <= prev.radius || newY >= CANVAS_HEIGHT - prev.radius) {
+      newDy = -newDy
+    }
 
-      // Ball collision with player paddle
-      if (
-        newX - prev.radius <= playerPaddle.x + playerPaddle.width &&
-        newX + prev.radius >= playerPaddle.x &&
-        newY >= playerPaddle.y &&
-        newY <= playerPaddle.y + playerPaddle.height &&
-        newDx < 0
-      ) {
-        newDx = -newDx
-        const hitPos = (newY - (playerPaddle.y + playerPaddle.height / 2)) / (playerPaddle.height / 2)
-        newDy = hitPos * 5
-      }
+    // Ball collision with player paddle
+    if (
+      newX - prev.radius <= pp.x + pp.width &&
+      newX + prev.radius >= pp.x &&
+      newY >= pp.y &&
+      newY <= pp.y + pp.height &&
+      newDx < 0
+    ) {
+      newDx = -newDx
+      const hitPos = (newY - (pp.y + pp.height / 2)) / (pp.height / 2)
+      newDy = hitPos * 5
+    }
 
-      // Ball collision with AI paddle
-      if (
-        newX + prev.radius >= aiPaddle.x &&
-        newX - prev.radius <= aiPaddle.x + aiPaddle.width &&
-        newY >= aiPaddle.y &&
-        newY <= aiPaddle.y + aiPaddle.height &&
-        newDx > 0
-      ) {
-        newDx = -newDx
-        const hitPos = (newY - (aiPaddle.y + aiPaddle.height / 2)) / (aiPaddle.height / 2)
-        newDy = hitPos * 5
-      }
+    // Ball collision with AI paddle
+    if (
+      newX + prev.radius >= ap.x &&
+      newX - prev.radius <= ap.x + ap.width &&
+      newY >= ap.y &&
+      newY <= ap.y + ap.height &&
+      newDx > 0
+    ) {
+      newDx = -newDx
+      const hitPos = (newY - (ap.y + ap.height / 2)) / (ap.height / 2)
+      newDy = hitPos * 5
+    }
 
-      // Ball goes off screen - scoring
-      if (newX < 0) {
-        setScore(prevScore => {
-          const newScore = { ...prevScore, ai: prevScore.ai + 1 }
-          if (newScore.ai >= WINNING_SCORE) {
-            setGameState('gameOver')
-          } else {
-            resetTimeoutRef.current = window.setTimeout(() => {
-              resetBall()
-              resetTimeoutRef.current = undefined
-            }, 1000)
-          }
-          return newScore
-        })
-        return prev
-      }
+    // Ball goes off screen - scoring
+    if (newX < 0) {
+      setScore(prevScore => {
+        const newScore = { ...prevScore, ai: prevScore.ai + 1 }
+        if (newScore.ai >= WINNING_SCORE) {
+          setGameState('gameOver')
+        } else {
+          resetTimeoutRef.current = window.setTimeout(() => {
+            resetBall()
+            resetTimeoutRef.current = undefined
+          }, 1000)
+        }
+        return newScore
+      })
+      return
+    }
 
-      if (newX > CANVAS_WIDTH) {
-        setScore(prevScore => {
-          const newScore = { ...prevScore, player: prevScore.player + 1 }
-          if (newScore.player >= WINNING_SCORE) {
-            setGameState('gameOver')
-          } else {
-            resetTimeoutRef.current = window.setTimeout(() => {
-              resetBall()
-              resetTimeoutRef.current = undefined
-            }, 1000)
-          }
-          return newScore
-        })
-        return prev
-      }
+    if (newX > CANVAS_WIDTH) {
+      setScore(prevScore => {
+        const newScore = { ...prevScore, player: prevScore.player + 1 }
+        if (newScore.player >= WINNING_SCORE) {
+          setGameState('gameOver')
+        } else {
+          resetTimeoutRef.current = window.setTimeout(() => {
+            resetBall()
+            resetTimeoutRef.current = undefined
+          }, 1000)
+        }
+        return newScore
+      })
+      return
+    }
 
-      return { ...prev, x: newX, y: newY, dx: newDx, dy: newDy }
-    })
-  }, [playerPaddle, aiPaddle, resetBall])
+    const newBall = { ...prev, x: newX, y: newY, dx: newDx, dy: newDy }
+    ballRef.current = newBall
+    setBall(newBall)
+  }, [resetBall])
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current
@@ -289,10 +291,9 @@ const Pong: React.FC<PongProps> = ({ onBack }) => {
   const gameLoop = useCallback(() => {
     if (gameState === 'playing') {
       updateBall()
-      setBall(currentBall => {
-        updatePaddles(currentBall)
-        return currentBall
-      })
+      updatePaddles()
+      setPlayerPaddle({ ...playerPaddleRef.current })
+      setAiPaddle({ ...aiPaddleRef.current })
     }
     draw()
     animationRef.current = requestAnimationFrame(gameLoop)
