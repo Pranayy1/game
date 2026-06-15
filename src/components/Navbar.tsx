@@ -29,13 +29,9 @@ const Navbar: React.FC<NavbarProps> = ({ currentGame, onHomeClick }) => {
           <span className="brand-text">GameHub</span>
         </div>
         
-        <div className="navbar-center">
-          <h2 className="current-game-title">{getGameTitle(currentGame)}</h2>
-        </div>
-        
         <div className="navbar-actions">
-          <a href="https://pranayy1.github.io/homepage(Studyplay)/" className="studyplay-link">
-            <span>📚</span>
+          <a href="https://pranayy1.github.io/Studyplay/" className="studyplay-link">
+            <span></span>
             StudyPlay
           </a>
           {currentGame !== 'hub' && (
